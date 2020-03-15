@@ -74,10 +74,10 @@ void LCD_Custom_Char (unsigned char loc, unsigned char *msg)
 	}
 }
 
-enum joystickInput{
-	up,down,left,right,none;
-	}joyIn;
-joyIn getJoystick(){
+ typedef enum joystickInput{
+	up,down,left,right,none,
+}joyIn;
+enum joystickInput getJoystick(){
 	joyIn ji;
 	uint16_t x,y;
 
