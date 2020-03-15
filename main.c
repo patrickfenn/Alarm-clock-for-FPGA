@@ -25,12 +25,13 @@
 #include <avr/eeprom.h>
 #include <avr/interrupt.h>
 
+//https://embedds.com/interfacing-analog-joystick-with-avr/
 void ADC_INIT(void)
 {
     ADMUX|=(1<<REFS0);
     ADCSRA|=(1<<ADEN)|(1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2); //ENABLE ADC, PRESCALER 128
 }
-
+//https://embedds.com/interfacing-analog-joystick-with-avr/
 uint16_t readadc(uint8_t ch)
 {
     ch&=0b00000111;         //ANDing to limit input to 7
@@ -73,8 +74,8 @@ void LCD_Custom_Char (unsigned char loc, unsigned char *msg)
 	}
 }
 
-typedef struct joystickInput{
-	unsigned char up,down,left,right,none;
+enum joystickInput{
+	up,down,left,right,none;
 	}joyIn;
 joyIn getJoystick(){
 	joyIn ji;
@@ -86,46 +87,27 @@ joyIn getJoystick(){
 	y = readadc(1);
 	y = y - 512;
 	if(x < 100){
-					ji.none = 1;
-					ji.left = 0;
-					ji.down = 0;
 
 				}
 		else if(x < 700){
-			ji.none = 0;
-			ji.right = 1;
-			ji.left = 0;
-			ji.up = ji.down =0;
-			return ji;
+			return right;
 		}
 
 		else{
-			ji.none = 0;
-			ji.right = 0;
-			ji.left = 1;
-			ji.up = ji.down =0;
-						return ji;
+			return left;
 		}
 
 	if(y <= 250){
-				ji.none = 1;
-				ji.up = 0;
-				ji.down = 0;
+
 			}
 	else if(y < 500){
-		ji.none = 0;
-		ji.up = 1;
-		ji.down = 0;
-		ji.left= ji.right = 0;
+		return up;
 	}
 
 	else{
-		ji.none = 0;
-		ji.up = 0;
-		ji.down = 1;
-		ji.left= ji.right = 0;
+		return down;
 	}
-	return ji;
+	return none;
 }
 unsigned char getLastDigit(unsigned char foo){
 
@@ -212,10 +194,6 @@ unsigned char getFirstDigit(unsigned char foo){
 
 
 }
-
-
-
-
 
 enum sstates{s_init, s_cnt}sstate;
 
@@ -515,64 +493,64 @@ int i_tick(istate){
         case i_1:
 
 
-        	if(index < 2 && ji.none == 0 && ji.right){
-        	        		index++;
-        	        	}
-        	        	else if(index > 0 && ji.none ==  0 && ji.left){
-        	        		index--;
-        	        	}
+        	if(index < 2 && ji != none && ji == right){
+        	    index++;
+        	}
+			else if(index > 0 && ji != none && ji == left){
+				index--;
+			}
 
-        	            if(ji.up == 1 ){
-        	                switch(index){
-        	                    case 0:
+			if(ji == up ){
+				switch(index){
+					case 0:
 
-        	                        th++;
-        	                        if(th >= 13){
-        	                            th = 1;
-        	                        }
-        	                        break;
-        	                    case 1:
-        	                        tm++;
-        	                        if(tm >= 60){
-        	                            tm = 0;
-        	                        }
-        	                        break;
-        	                    case 2:
-        	                        ts++;
-        	                        if(ts >= 60){
-        	                            ts = 0;
-        	                        }
-        	                        break;
-        	                    default:
-        	                        break;
-        	                }
-        	            }
-        	            else if(ji.down == 1 ){
-        							switch(index){
-        								case 0:
+						th++;
+						if(th >= 13){
+							th = 1;
+						}
+						break;
+					case 1:
+						tm++;
+						if(tm >= 60){
+							tm = 0;
+						}
+						break;
+					case 2:
+						ts++;
+						if(ts >= 60){
+							ts = 0;
+						}
+						break;
+					default:
+						break;
+				}
+			}
+			else if( ji == down ){
+						switch(index){
+							case 0:
 
-        									th--;
-        									if(th < 1){
-        										th = 11;
-        									}
-        									break;
-        								case 1:
-        									tm--;
-        									if(tm == 0){
-        										tm = 59;
-        									}
-        									break;
-        								case 2:
-        									ts--;
-        									if(ts == 0){
-        										ts = 59;
-        									}
-        									break;
-        								default:
-        									break;
-        							}
+								th--;
+								if(th < 1){
+									th = 11;
+								}
+								break;
+							case 1:
+								tm--;
+								if(tm == 0){
+									tm = 59;
+								}
+								break;
+							case 2:
+								ts--;
+								if(ts == 0){
+									ts = 59;
+								}
+								break;
+							default:
+								break;
+						}
 
-        	            }
+			}
 
             LCD_Cursor(1);
             LCD_WriteData(getFirstDigit(th));
@@ -593,14 +571,14 @@ int i_tick(istate){
             LCD_Cursor(0);
             break;
         case i_2:
-        	if(index < 2 && ji.none == 0 && ji.right){
+        	if(index < 2 && ji != none && ji == right){
         		index++;
         	}
-        	else if(index > 0 && ji.none ==  0 && ji.left){
+        	else if(index > 0 && ji != none && ji == left){
         		index--;
         	}
 
-            if(ji.up == 1 ){
+            if(ji == up){
                 switch(index){
                     case 0:
 
@@ -625,7 +603,7 @@ int i_tick(istate){
                         break;
                 }
             }
-            else if(ji.down == 1 ){
+            else if( ji == down){
 						switch(index){
 							case 0:
 
